@@ -1,14 +1,15 @@
-name: Python CI
+name: Python CI Pipeline
 
 on:
   push:
-    branches: [ robot_code ]
+    branches: [robot_code]
   pull_request:
-    branches: [ robot_code ]
+    branches: [robot_code]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:13
@@ -18,10 +19,15 @@ jobs:
           POSTGRES_DB: warehouse_db
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Python 3.9
       uses: actions/setup-python@v5
@@ -36,15 +42,26 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install psycopg2-binary pytest
         pip install -e .
+
+    - name: Initialize test database
+      env:
+        PGUSER: robot
+        PGPASSWORD: Access_for_robot_12345
+        PGHOST: localhost
+        PGPORT: 5432
+      run: |
+        psql -c "CREATE DATABASE warehouse_db;"
+        psql warehouse_db -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 
     - name: Prepare test data
       run: |
-        # Инициализация тестовой БД
-        psql postgresql://robot:Access_for_robot_12345@localhost:5432/warehouse_db -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+        python -c "from src.database_manager import DatabaseManager; DatabaseManager.initialize(force_recreate=True)"
 
     - name: Run tests
       env:
+        PYTHONPATH: ${{ github.workspace }}/src
         PGUSER: robot
         PGPASSWORD: Access_for_robot_12345
         PGHOST: localhost
