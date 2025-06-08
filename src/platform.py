@@ -1,6 +1,10 @@
 import time
 
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    GPIO = None  # или используйте заглушку
+
 
 from endstop import Endstop
 from motor import Motor
