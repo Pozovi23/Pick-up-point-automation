@@ -40,7 +40,6 @@ jobs:
 
     - name: Prepare test data
       run: |
-        cp graph.csv src/graph.csv
         # Инициализация тестовой БД
         psql postgresql://robot:Access_for_robot_12345@localhost:5432/warehouse_db -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 
