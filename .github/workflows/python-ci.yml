@@ -59,7 +59,7 @@ jobs:
         PGHOST: localhost
         PGPORT: 5432
       run: |
-        psql -d postgres -c "SELECT 'CREATE DATABASE warehouse_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'warehouse_db')\gexec;"
+        psql -d postgres -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'warehouse_db') THEN CREATE DATABASE warehouse_db; END IF; END \$\$;"
         psql -d warehouse_db -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 
     - name: Prepare test data
