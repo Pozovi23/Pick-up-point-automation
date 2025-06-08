@@ -1,6 +1,6 @@
 import pytest
-from shelf_db import Shelf
-from database_manager import DatabaseManager
+from src.shelf_db import Shelf
+from src.database_manager import DatabaseManager
 import psycopg2
 
 

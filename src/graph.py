@@ -1,4 +1,5 @@
 import csv
+import os
 from collections import deque
 
 
@@ -7,7 +8,7 @@ class Graph:
     Класс, отвечающий за граф склада и взаимодействие с ним(кратчайший путь, направление движения)
     """
 
-    def __init__(self, path_to_csv):
+    def __init__(self, path_to_csv=None):
         """
         Конструктор класса
 
@@ -15,6 +16,7 @@ class Graph:
 
         :param path_to_csv: путь к csv файл где описывается граф
         """
+        path_to_csv = path_to_csv if path_to_csv else os.path.join(os.path.dirname(__file__), 'graph.csv')
         self._graph = {}
         with open(path_to_csv, "r") as file:
             reader = csv.reader(file)

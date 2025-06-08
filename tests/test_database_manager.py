@@ -1,5 +1,5 @@
 import pytest
-from database_manager import DatabaseManager
+from src.database_manager import DatabaseManager
 import psycopg2
 
 
