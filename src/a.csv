@@ -1,0 +1,4 @@
+previous,from,to,direction
+Crossroad_4,base,Crossroad_1,forward
+base,Crossroad_1,Crossroad_2,right
+Crossroad_1,Crossroad_2,Shelf_1,right

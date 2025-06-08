@@ -30,8 +30,6 @@ class Graph:
 
                 self._graph[line[1]][line[2]][line[0]] = line[3]
 
-                self._graph[line[1]][line[2]][line[0]] = line[3]
-
     def get_direction(self, ancestor, begin, end):
         """
         Функция, определяющая направление следующего движения робота
@@ -60,14 +58,21 @@ class Graph:
         :return: кратчайший путь из start в end
         """
 
-        if start not in self._graph or end not in self._graph:
+        if start not in self._graph:
+            return None
+
+        end_in_graph = False
+        for key in self._graph.keys():
+            if list(self._graph[key].keys())[0] == end:
+                end_in_graph = True
+
+        if not end_in_graph:
             return None
 
         queue = deque()
         queue.append([start])
         visited = set()
         visited.add(start)
-
         while queue:
             path = queue.popleft()
             node = path[-1]
