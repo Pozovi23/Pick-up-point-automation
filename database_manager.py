@@ -6,6 +6,7 @@ class DatabaseManager:
     """
     Класс(ну или по факту метод), отвечающий  за удалению старой базы данных и создание новой, чистой
     """
+
     @staticmethod
     def initialize(force_recreate=False):
         conn = psycopg2.connect(

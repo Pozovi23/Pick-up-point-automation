@@ -6,6 +6,7 @@ class Shelf:
     """
     Класс, отвечающий за создание полки в базе данных
     """
+
     def __init__(self, index_of_shelf, rows):
         """
         Конструктор класса
@@ -39,7 +40,6 @@ class Shelf:
                     (self._index_of_shelf, row),
                 )
             self._conn.commit()
-
 
     def __del__(self):
         self._conn.close()
