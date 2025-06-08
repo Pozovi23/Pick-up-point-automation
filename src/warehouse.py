@@ -1,4 +1,4 @@
-from platform import Platform
+from robot_platform import Platform
 
 from database_manager import DatabaseManager
 from graph import Graph
