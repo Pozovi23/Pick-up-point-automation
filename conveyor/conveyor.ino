@@ -11,10 +11,15 @@ int BOX = 0;
 int LAST = 0; 
 #define SLAVE1_ADDR 0x10
 
+// ********************************************************
+// *                      API                             *
+// ********************************************************
 
 // Настройки точки доступа
-const char* ssid = "ESP32_AP";       // Имя точки доступа
-const char* password = "123456789";   // Пароль для точки доступа
+// const char* ssid = "ESP32_AP";       // Имя точки доступа
+// const char* password = "123456789";   // Пароль для точки доступа
+const char* ssid = "domru_2";       // Имя точки доступа
+const char* password = "220006005034";   // Пароль для точки доступа
 
 WebServer server; // Создаем объект веб-сервера
 
@@ -43,11 +48,24 @@ void handleNumber() {
   server.send(200, "text/plain", String(box_id));
 }
 
+
+// ********************************************************
+// *                     SETUP                            *
+// ********************************************************
+
 void setup() {
   //Wire.begin(); // Инициализация I2C на пинах GPIO 22 (SCL), GPIO 21 (SDA)
   Wire.begin(25, 26); // Инициализация I2C на пинах 25 (SDA) и 26 (SCL)
    // Настраиваем ESP32 как точку доступа
-  WiFi.softAP(ssid, password); // Создаем точку доступа с заданным SSID и паролем
+  // WiFi.softAP(ssid, password); // Создаем точку доступа с заданным SSID и паролем
+  // подключение к WiFi
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED){
+    delay(500);
+
+  }
+
   // Настройка маршрутов для обработки запросов
   server.on("/number", handleNumber); // Обработка запроса на /number
   server.on("/setNumber", handleSetNumber); // Обработка запроса на /setNumber?number=1
@@ -64,6 +82,10 @@ void setup() {
   writeToSlaves(SLAVE1_ADDR+3, 0x00);
 
 }
+
+// ********************************************************
+// *                      BOX                             *
+// ********************************************************
 
 struct Box {
     int id; // Идентификатор коробки
@@ -90,7 +112,9 @@ class BoxTracker {
                 currentBox.position = newPosition;
               }
 
-
+              if (newPosition == 4 && currentBox.position == 2){
+                currentBox.position = newPosition;
+              }
               tempQueue.push(currentBox);
           }
 
@@ -102,19 +126,8 @@ class BoxTracker {
 
           while (!boxQueue.empty()) {
               Box currentBox = boxQueue.front();
-              Serial.print("******************");
-              Serial.print('\n');
-              Serial.print(boxQueue.front().id);
-              Serial.print('\n');
-              Serial.print(boxQueue.front().position);
-              Serial.print('\n');
-              Serial.print("******************");
-              Serial.print('\n');
               boxQueue.pop();
               if (currentBox.position == 0 || currentBox.position == 1) {
-                Serial.print("ID");
-                Serial.print(currentBox.id);
-                Serial.print('\n');
                 return 1;
               }
               tempQueue.push(currentBox);
@@ -147,7 +160,7 @@ class BoxTracker {
     std::queue<Box> boxQueue;
 };
 
-
+// запись в устройство
 void writeToSlaves(uint8_t slaveAddr, uint8_t dataToSend) {
       Wire.beginTransmission(slaveAddr); // Начинаем передачу
       Wire.write(dataToSend); // Записываем байт
@@ -155,6 +168,10 @@ void writeToSlaves(uint8_t slaveAddr, uint8_t dataToSend) {
     }
 
 
+
+// ********************************************************
+// *                    PLATFORMS                         *
+// ********************************************************
 class Platform{
   public:
     void start(){
@@ -191,6 +208,7 @@ class Tern{
     }
 };
 
+// чтение с даттчиков
 uint8_t readFromSlaves(uint8_t slaveAddr) {
   uint8_t data;
   Wire.requestFrom(slaveAddr, 1); // Запрашиваем 1 байт
@@ -209,6 +227,10 @@ Platform platform;
 Tern tern;
 int check=0;
 
+
+// ********************************************************
+// *                  MAIN LOOP                           *
+// ********************************************************
 void loop() {
   for (uint8_t i=0; i<6; i++){
     if ((SLAVE1_ADDR + i) != 0x13){
@@ -230,12 +252,6 @@ void loop() {
       if (data[0] == 0x01){
         tracker.add_box(BOX);
         tracker.update_position(0);
-        // Serial.print("FIRSST");
-        // Serial.print('\n');
-        // for (int i=0; i<6; i++){
-        //   Serial.print(occupied[i]);
-        //   Serial.print('\n');
-        // }
         BOX++;
         if (!occupied[1]){
           platform.start();
@@ -245,12 +261,6 @@ void loop() {
       else{
         if (BOX != 0){
           tracker.update_position(1);
-          // Serial.print("SECOND");
-          // Serial.print('\n');
-          // for (int i=0; i<6; i++){
-          //   Serial.print(occupied[i]);
-          //   Serial.print('\n');
-          // }
         }
       }
   }
@@ -260,22 +270,10 @@ void loop() {
     if (data[1] != 0x01){
       if (!occupied[2]){
         tracker.update_position(2);
-        // Serial.print("THIRD");
-        // Serial.print('\n');
-        // for (int i=0; i<6; i++){
-        //   Serial.print(occupied[i]);
-        //   Serial.print('\n');
-        // }
       }
       else{
         platform.stop();
         occupied[1] = 1;
-        // Serial.print("FIRSST");
-        // Serial.print('\n');
-        // for (int i=0; i<6; i++){
-        //   Serial.print(occupied[i]);
-        //   Serial.print('\n');
-        // }
       }
     }
   }
@@ -292,12 +290,6 @@ void loop() {
           platform.stop();
           occupied[2] = 1;
 
-          // Serial.print("SECOND");
-          // Serial.print('\n');
-          // for (int i=0; i<6; i++){
-          //   Serial.print(occupied[i]);
-          //   Serial.print('\n');
-          // }
         }
       }
   }
@@ -306,25 +298,14 @@ void loop() {
   check = 0;
   if (prev_data[4] != data[4]){
       if (data[4] == 0x01){
+        tracker.update_position(4);
         check = tracker.check_position();
         if (data[4] == 0x01 && check == 1){
           platform.start();
-          Serial.print("DATA");
-          Serial.print('\n');
-          for (int i=0; i<6; i++){
-            Serial.print(occupied[i]);
-            Serial.print('\n');
-          }
         }
         if (occupied[5]){
           tern.stop();
-          tracker.update_position(4);
-          // Serial.print("FIRSST");
-          // Serial.print('\n');
-          // for (int i=0; i<6; i++){
-          //   Serial.print(occupied[i]);
-          //   Serial.print('\n');
-          // }
+          // tracker.update_position(4);
           occupied[4] = 1;
         }
       }
@@ -346,6 +327,106 @@ void loop() {
     box_id = -1;
     delay(3000);
   }
+}
 
+
+// ********************************************************
+// *                      TESTS                           *
+// ********************************************************
+
+
+// ********************************************************
+// *                    BOX TESTS                         *
+// ********************************************************
+void testBoxTracker() {
+  Serial.println("Running BoxTracker tests...");
   
+  BoxTracker tracker;
+  int testPassed = 0;
+  int testFailed = 0;
+
+  // Тест 1: Добавление коробки
+  tracker.add_box(1);
+  if (tracker.get_queue().size() == 1) {
+    Serial.println("Test 1 Passed: Box added successfully");
+    testPassed++;
+  } else {
+    Serial.println("Test 1 Failed: Box not added");
+    testFailed++;
+  }
+
+  // Тест 2: Обновление позиции
+  tracker.update_position(1);
+  if (tracker.get_first_box().position == 1) {
+    Serial.println("Test 2 Passed: Position updated");
+    testPassed++;
+  } else {
+    Serial.println("Test 2 Failed: Position not updated");
+    testFailed++;
+  }
+
+  // Тест 3: Проверка позиции
+  int check = tracker.check_position();
+  if (check == 1) {
+    Serial.println("Test 3 Passed: Position check correct");
+    testPassed++;
+  } else {
+    Serial.println("Test 3 Failed: Position check incorrect");
+    testFailed++;
+  }
+
+  // Тест 4: Удаление коробки
+  int removedId = tracker.remove_box();
+  if (removedId == 1 && tracker.get_queue().empty()) {
+    Serial.println("Test 4 Passed: Box removed");
+    testPassed++;
+  } else {
+    Serial.println("Test 4 Failed: Box not removed");
+    testFailed++;
+  }
+
+  Serial.printf("BoxTracker Tests: %d Passed, %d Failed\n\n", testPassed, testFailed);
+}
+
+
+// ********************************************************
+// *                  PLATFORM TESTS                      *
+// ********************************************************
+void testPlatform() {
+  Serial.println("Running Platform tests...");
+  int testPassed = 0;
+  
+  Platform platform;
+  
+  // Тест 1: Старт платформы
+  platform.start();
+  // Здесь нужно проверить состояние I2C устройств (можно добавить mock)
+  Serial.println("Test 1: Platform start command sent");
+  
+  // Тест 2: Стоп платформы
+  platform.stop();
+  Serial.println("Test 2: Platform stop command sent");
+  
+  // Для реального тестирования нужно проверять состояние устройств
+  Serial.println("Platform Tests: Manual verification required\n");
+}
+
+void testTern() {
+  Serial.println("Running Tern tests...");
+  
+  Tern tern;
+  
+  // Тест 1: Старт подъемника
+  tern.start();
+  Serial.println("Test 1: Tern start command sent");
+  
+  // Тест 2: Стоп подъемника
+  tern.stop();
+  Serial.println("Test 2: Tern stop command sent");
+  
+  // Тест 3: Остановка подъема
+  tern.lift_stop();
+  Serial.println("Test 3: Tern lift stop command sent");
+  
+  Serial.println("Tern Tests: Manual verification required\n");
 }
