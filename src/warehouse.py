@@ -1,11 +1,12 @@
-from robot_platform import Platform
-
 from database_manager import DatabaseManager
 from graph import Graph
 from line_follower import LineFollower
+from robot_platform import Platform
 from shelf_db import Shelf
 from shelf_scheduler import ShelfScheduler
-
+import requests
+import time
+import math
 
 class Warehouse:
     """
@@ -24,7 +25,7 @@ class Warehouse:
         """
         DatabaseManager.initialize(force_recreate=True)
         self._amount_of_shelves = 3
-        self._shelves = [Shelf(i, 3) for i in range(1, self._amount_of_shelves + 1)]
+        self._shelves = [Shelf(i, 2) for i in range(1, self._amount_of_shelves + 1)]
         self._scheduler = ShelfScheduler()
         self._road_graph = Graph("graph.csv")
         self._current_follower = LineFollower()
@@ -34,6 +35,7 @@ class Warehouse:
         self._curr_floor = None
         self._current_path = None
         self._box_id = 1
+        self._conveyor_ip = "192.168.0.220"
 
     def movement_in_warehouse(
         self, departure, destination, ancestor_of_departure_place
@@ -76,7 +78,6 @@ class Warehouse:
         """
         Функция, отвечающая за загрузку/выгрузку груза
         :param floor:
-        :return:
         """
         if floor == -1:
             self._platform.push_in_platform()
@@ -95,19 +96,60 @@ class Warehouse:
             self._platform.push_in_platform()
             self._platform.lower_until_endstop()
 
+    def _get_box_id(self):
+        """
+        Функция, запрашивающая индекс следующей коробки у конвейера
+        :return: индекс следующей коробки или -1 в случае ошибки
+        """
+        url = f"http://{self._conveyor_ip}/number"
+        try:
+            response = requests.get(url, timeout=5)
+            response.raise_for_status()
+            return int(response.text)
+        except requests.exceptions.RequestException as e:
+            print(f"Error getting box ID: {e}")
+            return -1
+        except ValueError as e:
+            print(f"Error parsing box ID: {e}")
+            return -1
+
+    def _notify_conveyor(self):
+        """
+        Функция, уведомляющая конвейер о том, что робот забрал коробку
+        """
+        url_1 = f"http://{self._conveyor_ip}/setNumber?number=1"
+        url_0 = f"http://{self._conveyor_ip}/setNumber?number=0"
+        try:
+            response1 = requests.get(url_1, timeout=5)
+            response1.raise_for_status()
+
+            time.sleep(0.1)
+
+            response0 = requests.get(url_0, timeout=5)
+            response0.raise_for_status()
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error notifying conveyor: {e}")
+
     def work(self):
         """
         Общий цикл программы
         """
         while True:
             if self._robot_state == "requesting_box":
-                self._box_id = self._box_id
-                self._robot_state = "grab_box"
-                print(f"got id = {self._box_id}")
+                self._box_id = self._get_box_id()
+                if 0 <= self._box_id <= math.inf:
+                    self._robot_state = "grab_box"
+                    print(f"got id = {self._box_id}")
+                else:
+                    print("No boxes")
+                    time.sleep(5)
+
 
             elif self._robot_state == "grab_box":
                 self.load_box(-1)
                 print(f"grabbed box")
+                self._notify_conveyor()
                 self._robot_state = "going_to_shelf"
 
             elif self._robot_state == "going_to_shelf":
@@ -132,4 +174,3 @@ class Warehouse:
                     f"Shelf_{self._curr_shelf}", "base", curr_ancestor
                 )
                 self._robot_state = "requesting_box"
-                break

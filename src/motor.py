@@ -1,8 +1,7 @@
 try:
     import RPi.GPIO as GPIO
 except ImportError:
-    GPIO = None  # или используйте заглушку
-
+    GPIO = None
 
 
 class Motor:

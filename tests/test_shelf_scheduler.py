@@ -1,7 +1,8 @@
 import pytest
-from src.shelf_scheduler import ShelfScheduler
-from src.shelf_db import Shelf
+
 from src.database_manager import DatabaseManager
+from src.shelf_db import Shelf
+from src.shelf_scheduler import ShelfScheduler
 
 
 @pytest.fixture

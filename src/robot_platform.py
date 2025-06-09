@@ -3,7 +3,7 @@ import time
 try:
     import RPi.GPIO as GPIO
 except ImportError:
-    GPIO = None  # или используйте заглушку
+    GPIO = None
 
 
 from endstop import Endstop
@@ -28,7 +28,7 @@ class Platform:
         self._push_in_endstop = Endstop(8)
         self._push_out_endstop = Endstop(1)
         self._stepper = Motor(0, 5)
-        self._horizontal_motor = Motor(20, 21)
+        self._horizontal_motor = Motor(21, 20)
         self.lower_until_endstop()
         self.push_in_platform()
 

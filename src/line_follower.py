@@ -3,7 +3,7 @@ import time
 try:
     import RPi.GPIO as GPIO
 except ImportError:
-    GPIO = None  # или используйте заглушку
+    GPIO = None
 
 
 from line_sensor import LineSensor
@@ -235,5 +235,5 @@ class LineFollower:
         Резкая остановка робота
         """
         self._left_motor.motor_control("break", 100)
-        self._right_motor.motor_control("break", 1000)
+        self._right_motor.motor_control("break", 100)
         time.sleep(1)
