@@ -18,8 +18,8 @@ int LAST = 0;
 // Настройки точки доступа
 // const char* ssid = "ESP32_AP";       // Имя точки доступа
 // const char* password = "123456789";   // Пароль для точки доступа
-const char* ssid = "domru_2";       // Имя точки доступа
-const char* password = "220006005034";   // Пароль для точки доступа
+const char* ssid = "WiFi";       // Имя точки доступа
+const char* password = "PASSWORD";   // Пароль для точки доступа
 
 WebServer server; // Создаем объект веб-сервера
 
