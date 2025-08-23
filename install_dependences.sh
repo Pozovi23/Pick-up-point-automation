@@ -11,7 +11,7 @@ echo "Установка psycopg2"
 pip install psycopg2
 
 echo "Установка RPi.GPIO"
-pip install RPi.GPIO
+pip install RPi.GPIO requests
 
 echo "Настройка PostgreSQL"
 sudo service postgresql start
