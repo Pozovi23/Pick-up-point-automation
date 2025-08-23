@@ -36,6 +36,18 @@ class Warehouse:
         self._current_path = None
         self._box_id = 1
         self._conveyor_ip = "192.168.0.220"
+        self._one_time_written = False
+        is_written = False
+        url_0 = f"http://{self._conveyor_ip}/setNumber?number=0"
+        while not is_written:
+            try:
+                response = requests.get(url_0, timeout=5)
+                response.raise_for_status()
+                is_written = True
+            except requests.exceptions.RequestException as e:
+                print(f"Error getting box ID: {e}")
+            except ValueError as e:
+                print(f"Error parsing box ID: {e}")
 
     def movement_in_warehouse(
         self, departure, destination, ancestor_of_departure_place
@@ -72,7 +84,6 @@ class Warehouse:
                 idx += 1
             else:
                 self._current_follower.move_straight()
-        self._current_follower.hard_stop()
 
     def load_box(self, floor):
         """
@@ -90,9 +101,18 @@ class Warehouse:
         elif floor == 0:
             self._platform.push_in_platform()
             self._platform.lower_until_endstop()
-            self._platform.move(2, "up")
+            self._platform.move(2.5, "up")
             self._platform.push_out_platform()
-            self._platform.move(1, "down")
+            self._platform.lower_until_endstop()
+            self._platform.push_in_platform()
+            self._platform.lower_until_endstop()
+
+        elif floor == 1:
+            self._platform.push_in_platform()
+            self._platform.lower_until_endstop()
+            self._platform.move(20, "up")
+            self._platform.push_out_platform()
+            self._platform.move(3, "down")
             self._platform.push_in_platform()
             self._platform.lower_until_endstop()
 
@@ -138,10 +158,16 @@ class Warehouse:
         while True:
             if self._robot_state == "requesting_box":
                 self._box_id = self._get_box_id()
-                if 0 <= self._box_id <= math.inf:
+                if 0 <= self._box_id <= math.inf and not self._one_time_written:
+                    self._one_time_written = True
+                    self._one_time_written = True
                     self._robot_state = "grab_box"
                     print(f"got id = {self._box_id}")
                 else:
+                    if self._one_time_written and self._box_id != 1:
+                        self._box_id = 1
+                        self._robot_state = "grab_box"
+                        
                     print("No boxes")
                     time.sleep(5)
 

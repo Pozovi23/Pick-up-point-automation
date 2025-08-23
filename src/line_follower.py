@@ -200,6 +200,7 @@ class LineFollower:
         time.sleep(1)
 
         if which_turn == "right":
+            print("right")
             self._turn_right()
             self._left_motor.motor_control("stop", 0)
             self._right_motor.motor_control("stop", 0)
@@ -209,6 +210,7 @@ class LineFollower:
                 exit(0)
             self._last_error = 2
         elif which_turn == "left":
+            print("left")
             self._turn_left()
             self._left_motor.motor_control("stop", 0)
             self._right_motor.motor_control("stop", 0)
@@ -218,6 +220,7 @@ class LineFollower:
                 print("Line not found")
                 exit(0)
         elif which_turn == "forward":
+            print("forward")
             self._go_forward()
             self._left_motor.motor_control("break", 100)
             self._right_motor.motor_control("break", 100)
@@ -234,6 +237,9 @@ class LineFollower:
         """
         Резкая остановка робота
         """
+        self._left_motor.motor_control("backward", 100)
+        self._right_motor.motor_control("backward", 100)
+        time.sleep(0.02)
         self._left_motor.motor_control("break", 100)
         self._right_motor.motor_control("break", 100)
-        time.sleep(1)
+        time.sleep(0.5)
