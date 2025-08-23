@@ -87,4 +87,4 @@
 
 ## Демонстрация работы
 
-![Demo](readme_videos/IMG_4370.MOV)
+![Demo](readme_videos/output.mp4)
